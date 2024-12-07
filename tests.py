@@ -81,3 +81,4 @@ def test_get_list_of_favorites_books(collector):
     collector.add_book_in_favorites("Гарри Поттер")
     collector.add_book_in_favorites("Сумерки")
     assert collector.get_list_of_favorites_books() == ["Гарри Поттер", "Сумерки"]
+
