@@ -1,84 +1,68 @@
 import pytest
-from main import BooksCollector
 
+@pytest.mark.parametrize("book_name", ["Гарри Поттер", "Война и мир", "Детектив 1"])
+def test_add_new_book_valid(books_collector, book_name):
+    """Проверка добавления книг с валидным названием."""
+    books_collector.add_new_book(book_name)
+    assert book_name in books_collector.books_genre
 
-@pytest.fixture
-def collector():
-    """Создаёт экземпляр BooksCollector для каждого теста."""
-    return BooksCollector()
+@pytest.mark.parametrize("book_name", ["", "a" * 41])
+def test_add_new_book_invalid(books_collector, book_name):
+    """Проверка невозможности добавления книги с невалидным названием."""
+    books_collector.add_new_book(book_name)
+    assert book_name not in books_collector.books_genre
 
+@pytest.mark.parametrize("genre", ["Фантастика", "Мультфильмы"])
+def test_set_book_genre_valid(books_collector, genre):
+    """Проверка установки валидного жанра."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.set_book_genre("Гарри Поттер", genre)
+    assert books_collector.get_book_genre("Гарри Поттер") == genre
 
-def test_add_new_book_success(collector):
-    collector.add_new_book("Гарри Поттер")
-    assert "Гарри Поттер" in collector.get_books_genre()
-    assert collector.get_book_genre("Гарри Поттер") == ""
-
-
-def test_add_new_book_failure_due_to_long_name(collector):
-    long_name = "А" * 41
-    collector.add_new_book(long_name)
-    assert long_name not in collector.get_books_genre()
-
-
-def test_add_new_book_failure_due_to_duplicate(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_new_book("Гарри Поттер")
-    assert len(collector.get_books_genre()) == 1
-
+@pytest.mark.parametrize("genre", ["Роман", "Поэзия"])
+def test_set_book_genre_invalid(books_collector, genre):
+    """Проверка невозможности установки невалидного жанра."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.set_book_genre("Гарри Поттер", genre)
+    assert books_collector.get_book_genre("Гарри Поттер") == ""
 
 @pytest.mark.parametrize(
-    "book, genre, expected",
+    "genre,expected_books",
     [
-        ("Гарри Поттер", "Фантастика", "Фантастика"),
-        ("Гарри Поттер", "Ужасы", "Ужасы"),
-        ("Гарри Поттер", "Романтика", ""),  # Жанр отсутствует в списке
-    ],
+        ("Фантастика", ["Гарри Поттер"]),
+        ("Мультфильмы", []),
+    ]
 )
-def test_set_book_genre(collector, book, genre, expected):
-    collector.add_new_book(book)
-    collector.set_book_genre(book, genre)
-    assert collector.get_book_genre(book) == expected
+def test_get_books_with_specific_genre(books_collector, genre, expected_books):
+    """Проверка получения списка книг с определённым жанром."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.set_book_genre("Гарри Поттер", "Фантастика")
+    assert books_collector.get_books_with_specific_genre(genre) == expected_books
 
+def test_get_books_for_children(books_collector):
+    """Проверка получения списка книг, подходящих детям."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.set_book_genre("Гарри Поттер", "Фантастика")
+    books_collector.add_new_book("Детектив 1")
+    books_collector.set_book_genre("Детектив 1", "Детективы")
+    assert books_collector.get_books_for_children() == ["Гарри Поттер"]
 
-def test_get_books_with_specific_genre(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_new_book("Сумерки")
-    collector.set_book_genre("Гарри Поттер", "Фантастика")
-    collector.set_book_genre("Сумерки", "Ужасы")
-    assert collector.get_books_with_specific_genre("Фантастика") == ["Гарри Поттер"]
-    assert collector.get_books_with_specific_genre("Ужасы") == ["Сумерки"]
+def test_add_book_in_favorites_success(books_collector):
+    """Проверка успешного добавления книги в избранное."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.add_book_in_favorites("Гарри Поттер")
+    assert books_collector.get_list_of_favorites_books() == ["Гарри Поттер"]
 
+def test_add_book_in_favorites_duplicate(books_collector):
+    """Проверка невозможности повторного добавления книги в избранное."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.add_book_in_favorites("Гарри Поттер")
+    books_collector.add_book_in_favorites("Гарри Поттер")
+    assert len(books_collector.get_list_of_favorites_books()) == 1
 
-def test_get_books_for_children(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_new_book("Дракула")
-    collector.set_book_genre("Гарри Поттер", "Фантастика")
-    collector.set_book_genre("Дракула", "Ужасы")
-    assert collector.get_books_for_children() == ["Гарри Поттер"]
-
-
-def test_add_book_in_favorites_success(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_book_in_favorites("Гарри Поттер")
-    assert collector.get_list_of_favorites_books() == ["Гарри Поттер"]
-
-
-def test_add_book_in_favorites_failure_due_to_absence(collector):
-    collector.add_book_in_favorites("Неизвестная книга")
-    assert collector.get_list_of_favorites_books() == []
-
-
-def test_delete_book_from_favorites(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_book_in_favorites("Гарри Поттер")
-    collector.delete_book_from_favorites("Гарри Поттер")
-    assert collector.get_list_of_favorites_books() == []
-
-
-def test_get_list_of_favorites_books(collector):
-    collector.add_new_book("Гарри Поттер")
-    collector.add_new_book("Сумерки")
-    collector.add_book_in_favorites("Гарри Поттер")
-    collector.add_book_in_favorites("Сумерки")
-    assert collector.get_list_of_favorites_books() == ["Гарри Поттер", "Сумерки"]
-
+def test_delete_book_from_favorites(books_collector):
+    """Проверка успешного удаления книги из избранного."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.add_book_in_favorites("Гарри Поттер")
+    books_collector.delete_book_from_favorites("Гарри Поттер")
+    assert books_collector.get_list_of_favorites_books() == []
