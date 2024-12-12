@@ -27,17 +27,23 @@ def test_set_book_genre_invalid(books_collector, genre):
     assert books_collector.get_book_genre("Гарри Поттер") == ""
 
 @pytest.mark.parametrize(
-    "genre,expected_books",
-    [
-        ("Фантастика", ["Гарри Поттер"]),
-        ("Мультфильмы", []),
-    ]
+    "genre",
+    ["Фантастика", "Детективы"]
 )
-def test_get_books_with_specific_genre(books_collector, genre, expected_books):
-    """Проверка получения списка книг с определённым жанром."""
+def test_get_books_with_specific_genre_positive(books_collector, genre):
+    """Проверка получения списка книг с определённым жанром (положительный сценарий)."""
+    books_collector.add_new_book("Гарри Поттер")
+    books_collector.set_book_genre("Гарри Поттер", genre)
+    assert books_collector.get_books_with_specific_genre(genre) == ["Гарри Поттер"]
+@pytest.mark.parametrize(
+    "genre",
+    ["Мультфильмы", "Поэзия"]
+)
+def test_get_books_with_specific_genre_negative(books_collector, genre):
+    """Проверка получения списка книг с определённым жанром (негативный сценарий)."""
     books_collector.add_new_book("Гарри Поттер")
     books_collector.set_book_genre("Гарри Поттер", "Фантастика")
-    assert books_collector.get_books_with_specific_genre(genre) == expected_books
+    assert books_collector.get_books_with_specific_genre(genre) == []
 
 def test_get_books_for_children(books_collector):
     """Проверка получения списка книг, подходящих детям."""
